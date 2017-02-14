@@ -6,12 +6,11 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Internal;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Internal;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using Microsoft.AspNetCore.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
@@ -393,6 +392,24 @@ namespace Microsoft.AspNetCore.Mvc.ModelBinding.Binders
                     nameof(Location.Point),
                     typeof(Location).FullName),
                 exception.Message);
+        }
+
+        [Fact]
+        public void CreateModel_ByCustomModelBinderProvider_CanCreateModels_ForParameterlessConstructorTypes()
+        {
+            // Arrange
+            var bindingContext = new DefaultModelBindingContext
+            {
+                ModelMetadata = GetMetadataForType(typeof(AddressWithNoParameterlessConstructor))
+            };
+            var binder = new CustomComplexTypeModelBinder(new Dictionary<ModelMetadata, IModelBinder>());
+
+            // Act
+            var model = binder.CreateModelPublic(bindingContext);
+
+            // Assert
+            var address = Assert.IsType<AddressWithNoParameterlessConstructor>(model);
+            Assert.Equal("Business", address.Name);
         }
 
         [Fact]
@@ -1431,6 +1448,38 @@ namespace Microsoft.AspNetCore.Mvc.ModelBinding.Binders
             {
                 SetPropertyPublic(bindingContext, modelName, propertyMetadata, result);
             }
+        }
+
+        // By default the ComplexTypeModelBinder does not bind to abstract types as we cannot construct them,
+        // but a developer could change this behavior by overridng CreateModel
+        private class CustomComplexTypeModelBinder : ComplexTypeModelBinder
+        {
+            public CustomComplexTypeModelBinder(IDictionary<ModelMetadata, IModelBinder> propertyBinders) : base(propertyBinders)
+            {
+            }
+
+            public virtual object CreateModelPublic(ModelBindingContext bindingContext)
+            {
+                return CreateModel(bindingContext);
+            }
+
+            protected override object CreateModel(ModelBindingContext bindingContext)
+            {
+                if (bindingContext.ModelType == typeof(AddressWithNoParameterlessConstructor))
+                {
+                    return Activator.CreateInstance(typeof(AddressWithNoParameterlessConstructor), "Business");
+                }
+                return base.CreateModel(bindingContext);
+            }
+        }
+
+        private class AddressWithNoParameterlessConstructor
+        {
+            public AddressWithNoParameterlessConstructor(string name)
+            {
+                Name = name;
+            }
+            public string Name { get; }
         }
     }
 }
