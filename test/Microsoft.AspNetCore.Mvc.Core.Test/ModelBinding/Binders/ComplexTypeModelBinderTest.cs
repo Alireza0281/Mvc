@@ -350,7 +350,7 @@ namespace Microsoft.AspNetCore.Mvc.ModelBinding.Binders
         }
 
         [Fact]
-        public void CreateModel_ForStructModelType_AsTopLevelObject_ThrowsExcetion()
+        public void CreateModel_ForStructModelType_AsTopLevelObject_ThrowsException()
         {
             // Arrange
             var bindingContext = new DefaultModelBindingContext
@@ -371,7 +371,7 @@ namespace Microsoft.AspNetCore.Mvc.ModelBinding.Binders
         }
 
         [Fact]
-        public void CreateModel_ForStructModelType_AsProperty_ThrowsExcetion()
+        public void CreateModel_ForStructModelType_AsProperty_ThrowsException()
         {
             // Arrange
             var bindingContext = new DefaultModelBindingContext
