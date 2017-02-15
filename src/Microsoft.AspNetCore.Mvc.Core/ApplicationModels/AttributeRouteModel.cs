@@ -42,6 +42,7 @@ namespace Microsoft.AspNetCore.Mvc.ApplicationModels
             Name = other.Name;
             Order = other.Order;
             Template = other.Template;
+            
         }
 
         public IRouteTemplateProvider Attribute { get; private set; }
