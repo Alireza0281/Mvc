@@ -483,7 +483,6 @@ namespace Microsoft.AspNetCore.Mvc.IntegrationTests
             // Model
             Assert.NotNull(modelBindingResult.Model);
             var boundModel = Assert.IsType<ClassWithNoDefaultConstructor>(modelBindingResult.Model);
-            Assert.NotNull(boundModel);
             Assert.Equal(100, boundModel.Id);
 
             // ModelState
@@ -597,7 +596,7 @@ namespace Microsoft.AspNetCore.Mvc.IntegrationTests
             }
         }
 
-        // By default the ComplexTypeModelBinder does not bind to abstract types as we cannot construct them,
+        // By default the ComplexTypeModelBinder fails to construct models for types with no parameterless constructor,
         // but a developer could change this behavior by overridng CreateModel
         private class CustomComplexTypeModelBinder : ComplexTypeModelBinder
         {
@@ -608,11 +607,8 @@ namespace Microsoft.AspNetCore.Mvc.IntegrationTests
 
             protected override object CreateModel(ModelBindingContext bindingContext)
             {
-                if (bindingContext.ModelType == typeof(ClassWithNoDefaultConstructor))
-                {
-                    return new ClassWithNoDefaultConstructor(100);
-                }
-                return base.CreateModel(bindingContext);
+                Assert.Equal(typeof(ClassWithNoDefaultConstructor), bindingContext.ModelType);
+                return new ClassWithNoDefaultConstructor(100);
             }
         }
 
